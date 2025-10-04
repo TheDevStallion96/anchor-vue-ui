@@ -72,7 +72,10 @@ const result = await dockerApi.getAllContainers()
 
 ### Build & Development
 - **Dev server**: `npm run dev` (Vite on port 5173)
-- **Environment**: Set `VITE_DOCKER_API_BASE_URL` for API backend URL
+- **Environment**: Configure API backend in `.env` file:
+  - `VITE_DOCKER_API_HOST` - API host (default: localhost)
+  - `VITE_DOCKER_API_PORT` - API port (default: 3000)
+  - `VITE_DOCKER_API_BASE_URL` - Complete URL (auto-generated if not provided)
 - **Dependencies**: Uses exact Node.js version requirements (`^20.19.0 || >=22.12.0`)
 
 ## Key Files to Reference

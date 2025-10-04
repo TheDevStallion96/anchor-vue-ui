@@ -124,12 +124,27 @@ anchor-vue-ui/
 
 ### Environment Variables
 
-Create a `.env` file in the root directory:
+Create a `.env` file in the root directory or copy from `.env.example`:
+
+```bash
+# Copy the example environment file
+cp .env.example .env
+```
+
+**Available environment variables:**
 
 ```env
-# Docker API Base URL
+# Docker API Host (default: localhost)
+VITE_DOCKER_API_HOST=localhost
+
+# Docker API Port (default: 3000)
+VITE_DOCKER_API_PORT=3000
+
+# Complete Docker API Base URL (auto-generated if not provided)
 VITE_DOCKER_API_BASE_URL=http://localhost:3000/api/v1
 ```
+
+**Note:** You can either set `VITE_DOCKER_API_HOST` and `VITE_DOCKER_API_PORT` individually, or provide the complete `VITE_DOCKER_API_BASE_URL`. If you provide the complete URL, it will take precedence.
 
 ### Docker API Backend
 

@@ -27,6 +27,11 @@ export const NAVIGATION_ITEMS = [
   }
 ]
 
-export const DOCKER_API_BASE_URL = import.meta.env.VITE_DOCKER_API_BASE_URL || 'http://localhost:3000/api/v1'
+// Docker API Configuration
+const API_HOST = import.meta.env.VITE_DOCKER_API_HOST || 'localhost'
+const API_PORT = import.meta.env.VITE_DOCKER_API_PORT || '3000'
+const DEFAULT_API_URL = `http://${API_HOST}:${API_PORT}/api/v1`
+
+export const DOCKER_API_BASE_URL = import.meta.env.VITE_DOCKER_API_BASE_URL || DEFAULT_API_URL
 
 export const APP_NAME = 'Anchor'
