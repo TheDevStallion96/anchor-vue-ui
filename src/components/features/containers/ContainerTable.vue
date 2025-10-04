@@ -2,26 +2,11 @@
   <div v-if="!loading || containers.length > 0" class="bg-gray-800 rounded-lg overflow-hidden">
     <table class="w-full">
       <!-- Table Header -->
-      <thead class="bg-gray-850 border-b border-gray-700">
-        <tr class="text-left text-gray-400 text-sm">
-          <th class="p-4 w-12">
-            <input 
-              type="checkbox" 
-              class="rounded bg-gray-700 border-gray-600"
-              :checked="allSelected"
-              :indeterminate="someSelected"
-              @change="toggleSelectAll"
-            >
-          </th>
-          <th class="p-4">Name</th>
-          <th class="p-4">Container ID</th>
-          <th class="p-4">Image</th>
-          <th class="p-4">Status</th>
-          <th class="p-4">Port(s)</th>
-          <th class="p-4">Created</th>
-          <th class="p-4">Actions</th>
-        </tr>
-      </thead>
+      <ContainerTableHeader 
+        :all-selected="allSelected"
+        :some-selected="someSelected"
+        @toggle-select-all="toggleSelectAll"
+      />
       
       <!-- Table Body -->
       <tbody>
@@ -58,50 +43,22 @@
     </table>
     
     <!-- Bulk Actions Bar -->
-    <div 
-      v-if="selectedContainers.size > 0"
-      class="bg-gray-750 border-t border-gray-700 p-4 flex items-center justify-between"
-    >
-      <div class="flex items-center gap-2 text-gray-300">
-        <span>{{ selectedContainers.size }} container{{ selectedContainers.size > 1 ? 's' : '' }} selected</span>
-      </div>
-      
-      <div class="flex items-center gap-2">
-        <button 
-          @click="$emit('bulk-start', Array.from(selectedContainers))"
-          class="text-green-400 hover:text-green-300 px-3 py-1 rounded transition-colors"
-          :disabled="actionLoading"
-        >
-          Start All
-        </button>
-        <button 
-          @click="$emit('bulk-stop', Array.from(selectedContainers))"
-          class="text-yellow-400 hover:text-yellow-300 px-3 py-1 rounded transition-colors"
-          :disabled="actionLoading"
-        >
-          Stop All
-        </button>
-        <button 
-          @click="$emit('bulk-remove', Array.from(selectedContainers))"
-          class="text-red-400 hover:text-red-300 px-3 py-1 rounded transition-colors"
-          :disabled="actionLoading"
-        >
-          Remove All
-        </button>
-        <button 
-          @click="clearSelection"
-          class="text-gray-400 hover:text-white px-3 py-1 rounded transition-colors"
-        >
-          Clear Selection
-        </button>
-      </div>
-    </div>
+    <ContainerBulkActions
+      :selected-count="selectedContainers.size"
+      :loading="actionLoading"
+      @bulk-start="$emit('bulk-start', Array.from(selectedContainers))"
+      @bulk-stop="$emit('bulk-stop', Array.from(selectedContainers))"
+      @bulk-remove="$emit('bulk-remove', Array.from(selectedContainers))"
+      @clear-selection="clearSelection"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import ContainerRow from './ContainerRow.vue'
+import ContainerTableHeader from './ContainerTableHeader.vue'
+import ContainerBulkActions from './ContainerBulkActions.vue'
 
 const props = defineProps({
   containers: {
