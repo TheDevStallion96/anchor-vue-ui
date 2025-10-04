@@ -1,0 +1,87 @@
+{
+  "name": "Anchor Vue UI",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  
+  // Features to add to the dev container
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "moby": true
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    }
+  },
+
+  // Configure tool-specific properties
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // Vue.js essentials
+        "Vue.volar",
+        "Vue.vscode-typescript-vue-plugin",
+        
+        // JavaScript/TypeScript
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        
+        // Tailwind CSS
+        "bradlc.vscode-tailwindcss",
+        
+        // General development
+        "eamodio.gitlens",
+        "christian-kohler.path-intellisense",
+        "formulahendry.auto-rename-tag",
+        "ms-vscode.vscode-typescript-next"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        },
+        "files.eol": "\n",
+        "[vue]": {
+          "editor.defaultFormatter": "Vue.volar"
+        },
+        "[javascript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        }
+      }
+    }
+  },
+
+  // Use 'forwardPorts' to make a list of ports inside the container available locally
+  "forwardPorts": [
+    5173,  // Vite dev server
+    3000   // Docker API backend
+  ],
+
+  // Port attributes
+  "portsAttributes": {
+    "5173": {
+      "label": "Vite Dev Server",
+      "onAutoForward": "notify"
+    },
+    "3000": {
+      "label": "Docker API Backend",
+      "onAutoForward": "silent"
+    }
+  },
+
+  // Use 'postCreateCommand' to run commands after the container is created
+  "postCreateCommand": "npm install",
+
+  // Set container-specific environment variables
+  "remoteEnv": {
+    "NODE_ENV": "development"
+  },
+
+  // Mount the Docker socket from the host (for Docker-in-Docker)
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
+
+  // Comment out to connect as root instead
+  "remoteUser": "node"
+}
