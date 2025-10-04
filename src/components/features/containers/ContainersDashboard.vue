@@ -55,13 +55,19 @@
       <ContainerStats :stats="containersStore.containerStats" class="mb-8" />
 
       <!-- Search and Filters -->
-      <ContainerSearch
-        v-if="!containersStore.loading || containersStore.containers.length > 0"
-        v-model="containersStore.searchQuery"
-        :filtered-count="containersStore.filteredContainers.length"
-        :total-count="containersStore.containers.length"
-        class="mb-8"
-      />
+          <!-- Search -->
+    <ContainerSearch 
+      v-model="store.searchQuery" 
+      :filtered-count="store.filteredContainers.length"
+      :total-count="store.containers.length"
+      :status-filter="store.statusFilter"
+      :sort-by="store.sortBy"
+      :sort-order="store.sortOrder"
+      @update:status-filter="store.setStatusFilter"
+      @update:sort-by="store.setSortBy"
+      @toggle-sort-order="store.toggleSortOrder"
+      @clear-filters="store.clearFilters"
+    />
 
       <!-- Table -->
       <div v-if="!containersStore.loading || containersStore.containers.length > 0" class="bg-gray-800 rounded-lg overflow-hidden">
