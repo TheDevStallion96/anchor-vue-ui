@@ -29,6 +29,10 @@ Thank you for your interest in contributing to Anchor Vue UI! This document prov
 - Git
 - Docker API backend (for testing)
 
+**OR** use the provided Dev Container (recommended):
+- [Docker Desktop](https://www.docker.com/products/docker-desktop)
+- [VS Code](https://code.visualstudio.com/) with [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+
 ### Fork and Clone
 
 1. Fork the repository on GitHub
@@ -45,15 +49,29 @@ cd anchor-vue-ui
 git remote add upstream https://github.com/TheDevStallion96/anchor-vue-ui.git
 ```
 
-### Install Dependencies
+### Setup Development Environment
+
+#### Option 1: Using Dev Container (Recommended)
+
+The easiest way to get started is using the provided dev container:
+
+1. Open the project in VS Code
+2. When prompted, click "Reopen in Container" (or press `F1` and select `Dev Containers: Reopen in Container`)
+3. Wait for the container to build and start
+4. Dependencies will be automatically installed
+5. Start coding!
+
+See [.devcontainer/README.md](.devcontainer/README.md) for more details.
+
+#### Option 2: Local Setup
+
+If you prefer to develop locally:
 
 ```bash
+# Install dependencies
 npm install
-```
 
-### Start Development Server
-
-```bash
+# Start development server
 npm run dev
 ```
 

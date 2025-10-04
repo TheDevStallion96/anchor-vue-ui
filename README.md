@@ -28,7 +28,33 @@ Anchor is a powerful, user-friendly web interface for managing Docker containers
 
 ## Quick Start
 
-### Installation
+### Option 1: Using Dev Container (Recommended)
+
+The fastest way to get started with a consistent development environment:
+
+1. **Prerequisites:**
+   - Install [Docker Desktop](https://www.docker.com/products/docker-desktop)
+   - Install [VS Code](https://code.visualstudio.com/) with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+
+2. **Clone and open:**
+   ```bash
+   git clone https://github.com/TheDevStallion96/anchor-vue-ui.git
+   cd anchor-vue-ui
+   code .
+   ```
+
+3. **Reopen in container:**
+   - When prompted, click "Reopen in Container"
+   - Or press `F1` and select `Dev Containers: Reopen in Container`
+
+4. **Start developing:**
+   ```bash
+   npm run dev
+   ```
+
+See [.devcontainer/README.md](.devcontainer/README.md) for more details.
+
+### Option 2: Local Installation
 
 ```bash
 # Clone the repository
