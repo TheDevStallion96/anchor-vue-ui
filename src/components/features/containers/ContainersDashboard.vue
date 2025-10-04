@@ -57,149 +57,53 @@
       <!-- Search and Filters -->
           <!-- Search -->
     <ContainerSearch 
-      v-model="store.searchQuery" 
-      :filtered-count="store.filteredContainers.length"
-      :total-count="store.containers.length"
-      :status-filter="store.statusFilter"
-      :sort-by="store.sortBy"
-      :sort-order="store.sortOrder"
-      @update:status-filter="store.setStatusFilter"
-      @update:sort-by="store.setSortBy"
-      @toggle-sort-order="store.toggleSortOrder"
-      @clear-filters="store.clearFilters"
+      v-model="containersStore.searchQuery" 
+      :filtered-count="containersStore.filteredContainers.length"
+      :total-count="containersStore.containers.length"
+      :status-filter="containersStore.statusFilter"
+      :sort-by="containersStore.sortBy"
+      :sort-order="containersStore.sortOrder"
+      @update:status-filter="containersStore.setStatusFilter"
+      @update:sort-by="containersStore.setSortBy"
+      @toggle-sort-order="containersStore.toggleSortOrder"
+      @clear-filters="containersStore.clearFilters"
     />
 
-      <!-- Table -->
-      <div v-if="!containersStore.loading || containersStore.containers.length > 0" class="bg-gray-800 rounded-lg overflow-hidden">
-        <table class="w-full">
-          <thead class="bg-gray-850 border-b border-gray-700">
-            <tr class="text-left text-gray-400 text-sm">
-              <th class="p-4 w-12">
-                <input type="checkbox" class="rounded bg-gray-700 border-gray-600">
-              </th>
-              <th class="p-4">Name</th>
-              <th class="p-4">Container ID</th>
-              <th class="p-4">Image</th>
-              <th class="p-4">Status</th>
-              <th class="p-4">Port(s)</th>
-              <th class="p-4">Created</th>
-              <th class="p-4">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="containersStore.filteredContainers.length === 0 && !containersStore.loading">
-              <td colspan="8" class="p-8 text-center text-gray-500">
-                {{ containersStore.searchQuery ? 'No containers match your search.' : 'No containers found.' }}
-              </td>
-            </tr>
-            <tr 
-              v-for="container in sortedContainers" 
-              :key="container.id"
-              class="border-b border-gray-700 hover:bg-gray-750"
-            >
-              <td class="p-4">
-                <input type="checkbox" class="rounded bg-gray-700 border-gray-600">
-              </td>
-              <td class="p-4">
-                <div class="flex items-center gap-2">
-                  <button class="text-gray-400 hover:text-white">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                  </button>
-                  <div :class="containerUtils.getStatusIndicator(container.status)"></div>
-                  <span class="text-white">{{ containersStore.getContainerName(container) }}</span>
-                </div>
-              </td>
-              <td class="p-4 text-gray-400 font-mono text-sm">{{ container.id.substring(0, 12) }}</td>
-              <td class="p-4 text-gray-400">{{ containerUtils.getImageName(container.image) }}</td>
-              <td class="p-4">
-                <span :class="containerUtils.getStatusBadgeClasses(container.status)">
-                  {{ container.status }}
-                </span>
-              </td>
-              <td class="p-4 text-gray-400">{{ containerUtils.getContainerPorts(container) }}</td>
-              <td class="p-4 text-gray-400 text-sm">{{ containerUtils.formatDate(container.created) }}</td>
-              <td class="p-4">
-                <div class="flex items-center gap-2">
-                  <button 
-                    class="text-gray-400 hover:text-white p-1" 
-                    title="View logs"
-                    @click="viewLogs(container)"
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                  </button>
-                  <button 
-                    v-if="containerUtils.canPerformAction(container, 'start')"
-                    class="text-green-400 hover:text-green-300 p-1" 
-                    title="Start container"
-                    @click="handleStartContainer(container)"
-                    :disabled="actionLoading"
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                  </button>
-                  <button 
-                    v-if="containerUtils.canPerformAction(container, 'stop')"
-                    class="text-yellow-400 hover:text-yellow-300 p-1" 
-                    title="Stop container"
-                    @click="handleStopContainer(container)"
-                    :disabled="actionLoading"
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10h6v4H9z"></path>
-                    </svg>
-                  </button>
-                  <button class="text-gray-400 hover:text-white p-1" title="More options">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
-                    </svg>
-                  </button>
-                  <button 
-                    v-if="containerUtils.canPerformAction(container, 'remove')"
-                    class="text-red-400 hover:text-red-300 p-1" 
-                    title="Remove container"
-                    @click="handleRemoveContainer(container)"
-                    :disabled="actionLoading"
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <!-- Container Table -->
+      <ContainerTable
+        :containers="containersStore.filteredContainers"
+        :loading="containersStore.loading"
+        :action-loading="actionLoading"
+        :search-query="containersStore.searchQuery"
+        :empty-message="containersStore.searchQuery ? 'No containers match your search.' : 'No containers found.'"
+        @start-container="handleStartContainer"
+        @stop-container="handleStopContainer"
+        @remove-container="handleRemoveContainer"
+        @view-logs="viewLogs"
+        @inspect-container="inspectContainer"
+        @bulk-start="handleBulkStart"
+        @bulk-stop="handleBulkStop"
+        @bulk-remove="handleBulkRemove"
+      />
     </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useContainersStore } from '@/stores/containers'
 import { containerUtils, notificationUtils } from '@/utils/containerUtils'
 import ErrorAlert from '@/components/common/ErrorAlert.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import ContainerStats from '@/components/features/containers/ContainerStats.vue'
 import ContainerSearch from '@/components/features/containers/ContainerSearch.vue'
+import ContainerTable from '@/components/features/containers/ContainerTable.vue'
 
 // Store
 const containersStore = useContainersStore()
 
 // Local state for action loading
 const actionLoading = ref(false)
-
-// Computed properties
-const sortedContainers = computed(() => {
-  return containerUtils.sortContainers(containersStore.filteredContainers)
-})
 
 // Action handlers with improved error handling and user feedback
 const handleTestConnection = async () => {
@@ -263,6 +167,80 @@ const viewLogs = (container) => {
   const containerName = containersStore.getContainerName(container)
   notificationUtils.info(`View logs for: ${containerName}`)
   // TODO: Implement log viewing modal
+}
+
+const inspectContainer = (container) => {
+  const containerName = containersStore.getContainerName(container)
+  notificationUtils.info(`Inspect container: ${containerName}`)
+  // TODO: Implement container inspection modal
+}
+
+// Bulk action handlers
+const handleBulkStart = async (containerIds) => {
+  actionLoading.value = true
+  try {
+    const results = await Promise.allSettled(
+      containerIds.map(id => containersStore.startContainer(id))
+    )
+    
+    const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length
+    const failed = results.length - successful
+    
+    if (successful > 0) {
+      notificationUtils.success(`Started ${successful} container${successful > 1 ? 's' : ''}`)
+    }
+    if (failed > 0) {
+      notificationUtils.error(`Failed to start ${failed} container${failed > 1 ? 's' : ''}`)
+    }
+  } finally {
+    actionLoading.value = false
+  }
+}
+
+const handleBulkStop = async (containerIds) => {
+  actionLoading.value = true
+  try {
+    const results = await Promise.allSettled(
+      containerIds.map(id => containersStore.stopContainer(id))
+    )
+    
+    const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length
+    const failed = results.length - successful
+    
+    if (successful > 0) {
+      notificationUtils.success(`Stopped ${successful} container${successful > 1 ? 's' : ''}`)
+    }
+    if (failed > 0) {
+      notificationUtils.error(`Failed to stop ${failed} container${failed > 1 ? 's' : ''}`)
+    }
+  } finally {
+    actionLoading.value = false
+  }
+}
+
+const handleBulkRemove = async (containerIds) => {
+  if (!confirm(`Are you sure you want to remove ${containerIds.length} container${containerIds.length > 1 ? 's' : ''}?`)) {
+    return
+  }
+
+  actionLoading.value = true
+  try {
+    const results = await Promise.allSettled(
+      containerIds.map(id => containersStore.removeContainer(id))
+    )
+    
+    const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length
+    const failed = results.length - successful
+    
+    if (successful > 0) {
+      notificationUtils.success(`Removed ${successful} container${successful > 1 ? 's' : ''}`)
+    }
+    if (failed > 0) {
+      notificationUtils.error(`Failed to remove ${failed} container${failed > 1 ? 's' : ''}`)
+    }
+  } finally {
+    actionLoading.value = false
+  }
 }
 
 // Lifecycle
