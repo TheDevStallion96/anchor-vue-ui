@@ -14,6 +14,30 @@ export const containerUtils = {
   },
 
   /**
+   * Extract image tag from full image string
+   */
+  getImageTag(image) {
+    if (!image) return null
+    const parts = image.split(':')
+    return parts.length > 1 ? parts[parts.length - 1] : 'latest'
+  },
+
+  /**
+   * Get container name with fallback to ID
+   */
+  getContainerName(container) {
+    if (!container) return 'Unknown'
+    
+    if (container.names && container.names.length > 0) {
+      // Remove leading slash from Docker container names
+      return container.names[0].replace(/^\//, '')
+    }
+    
+    // Fallback to short ID
+    return container.id?.substring(0, 12) || 'Unknown'
+  },
+
+  /**
    * Format container ports for display
    */
   getContainerPorts(container) {
@@ -148,6 +172,61 @@ export const containerUtils = {
     }
     
     return actions[action]?.includes(container.status) || false
+  },
+
+  /**
+   * Format relative time (e.g., "2 hours ago")
+   */
+  formatRelativeTime(dateString) {
+    if (!dateString) return '-'
+    
+    try {
+      const date = new Date(dateString)
+      const now = new Date()
+      const diffInMs = now - date
+      const diffInMinutes = Math.floor(diffInMs / (1000 * 60))
+      const diffInHours = Math.floor(diffInMinutes / 60)
+      const diffInDays = Math.floor(diffInHours / 24)
+
+      if (diffInMinutes < 1) return 'Just now'
+      if (diffInMinutes < 60) return `${diffInMinutes}m ago`
+      if (diffInHours < 24) return `${diffInHours}h ago`
+      if (diffInDays < 30) return `${diffInDays}d ago`
+      
+      const diffInMonths = Math.floor(diffInDays / 30)
+      if (diffInMonths < 12) return `${diffInMonths}mo ago`
+      
+      const diffInYears = Math.floor(diffInMonths / 12)
+      return `${diffInYears}y ago`
+    } catch (error) {
+      console.warn('Invalid date string:', dateString)
+      return '-'
+    }
+  },
+
+  /**
+   * Format container uptime from state info
+   */
+  formatUptime(state) {
+    if (!state?.startedAt) return '-'
+    
+    try {
+      const startTime = new Date(state.startedAt)
+      const now = new Date()
+      const uptimeMs = now - startTime
+      
+      const days = Math.floor(uptimeMs / (1000 * 60 * 60 * 24))
+      const hours = Math.floor((uptimeMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+      const minutes = Math.floor((uptimeMs % (1000 * 60 * 60)) / (1000 * 60))
+      
+      if (days > 0) return `Up ${days}d ${hours}h`
+      if (hours > 0) return `Up ${hours}h ${minutes}m`
+      if (minutes > 0) return `Up ${minutes}m`
+      return 'Up < 1m'
+    } catch (error) {
+      console.warn('Invalid uptime calculation:', error)
+      return '-'
+    }
   }
 }
 
