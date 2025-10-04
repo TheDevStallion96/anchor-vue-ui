@@ -1,23 +1,20 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { useDockerApi } from '@/composables/useDockerApi'
+import { useDockerContainers } from '@/composables/docker'
 
 export const useContainersStore = defineStore('containers', () => {
-  // State
-  const containers = ref([])
-  const loading = ref(false)
-  const error = ref(null)
+  // Use the dedicated Docker containers composable
+  const dockerContainers = useDockerContainers()
+  
+  // Additional UI state (not Docker-specific)
   const searchQuery = ref('')
   const statusFilter = ref('all') // 'all', 'running', 'stopped', 'exited', 'created'
   const sortBy = ref('status') // 'name', 'status', 'created', 'image'
   const sortOrder = ref('asc') // 'asc', 'desc'
 
-  // Docker API
-  const dockerApi = useDockerApi()
-
-  // Getters (computed)
+  // Enhanced computed properties that combine Docker data with UI filtering/sorting
   const filteredContainers = computed(() => {
-    let filtered = containers.value
+    let filtered = dockerContainers.containers.value
 
     // Apply status filter
     if (statusFilter.value !== 'all') {
@@ -61,7 +58,7 @@ export const useContainersStore = defineStore('containers', () => {
       } else {
         // Default search: name, image, id, status
         filtered = filtered.filter(container => {
-          const name = getContainerName(container).toLowerCase()
+          const name = dockerContainers.getContainerName(container).toLowerCase()
           const image = container.image?.toLowerCase() || ''
           const id = container.id?.toLowerCase() || ''
           const status = container.status?.toLowerCase() || ''
@@ -80,8 +77,8 @@ export const useContainersStore = defineStore('containers', () => {
       
       switch (sortBy.value) {
         case 'name':
-          aValue = getContainerName(a).toLowerCase()
-          bValue = getContainerName(b).toLowerCase()
+          aValue = dockerContainers.getContainerName(a).toLowerCase()
+          bValue = dockerContainers.getContainerName(b).toLowerCase()
           break
         case 'status':
           // Custom status priority for better UX
@@ -107,87 +104,9 @@ export const useContainersStore = defineStore('containers', () => {
     })
   })
 
-  const runningContainers = computed(() => {
-    return containers.value.filter(container => container.status === 'running')
-  })
-
-  const containerStats = computed(() => ({
-    total: containers.value.length,
-    running: runningContainers.value.length,
-    stopped: containers.value.filter(c => c.status === 'exited' || c.status === 'stopped').length,
-    cpuUsage: '2.5%', // TODO: Implement real stats
-    memoryUsage: '512 MB' // TODO: Implement real stats
-  }))
-
-  // Helper function (moved from component)
-  const getContainerName = (container) => {
-    if (container.name) {
-      return container.name
-    }
-    return container.id?.substring(0, 12) || 'Unknown'
-  }
-
-  // Actions
-  const fetchContainers = async () => {
-    loading.value = true
-    error.value = null
-    
-    try {
-      const data = await dockerApi.getAllContainers()
-      containers.value = data || []
-    } catch (err) {
-      error.value = err.message
-      console.error('Failed to fetch containers:', err)
-    } finally {
-      loading.value = false
-    }
-  }
-
-  const startContainer = async (containerId) => {
-    try {
-      await dockerApi.startContainer(containerId)
-      await fetchContainers() // Refresh list
-      return { success: true }
-    } catch (err) {
-      error.value = `Failed to start container: ${err.message}`
-      return { success: false, error: err.message }
-    }
-  }
-
-  const stopContainer = async (containerId) => {
-    try {
-      await dockerApi.stopContainer(containerId)
-      await fetchContainers() // Refresh list
-      return { success: true }
-    } catch (err) {
-      error.value = `Failed to stop container: ${err.message}`
-      return { success: false, error: err.message }
-    }
-  }
-
-  const removeContainer = async (containerId, force = false) => {
-    try {
-      await dockerApi.removeContainer(containerId, force)
-      await fetchContainers() // Refresh list
-      return { success: true }
-    } catch (err) {
-      error.value = `Failed to remove container: ${err.message}`
-      return { success: false, error: err.message }
-    }
-  }
-
-  const testConnection = async () => {
-    try {
-      await dockerApi.testConnection()
-      return { success: true }
-    } catch (err) {
-      error.value = `Connection test failed: ${err.message}`
-      return { success: false, error: err.message }
-    }
-  }
-
+  // UI state management actions
   const clearError = () => {
-    error.value = null
+    dockerContainers.error.value = null
   }
 
   const setSearchQuery = (query) => {
@@ -220,31 +139,46 @@ export const useContainersStore = defineStore('containers', () => {
   }
 
   return {
-    // State
-    containers,
-    loading,
-    error,
+    // UI State
     searchQuery,
     statusFilter,
     sortBy,
     sortOrder,
-    // Getters
+
+    // Docker state (from composable)
+    containers: dockerContainers.containers,
+    loading: dockerContainers.loading,
+    error: dockerContainers.error,
+    
+    // Enhanced computed properties
     filteredContainers,
-    runningContainers,
-    containerStats,
-    // Actions
-    fetchContainers,
-    startContainer,
-    stopContainer,
-    removeContainer,
-    testConnection,
+    runningContainers: dockerContainers.runningContainers,
+    stoppedContainers: dockerContainers.stoppedContainers,
+    containerStats: dockerContainers.containerStats,
+    
+    // Docker operations (from composable)
+    fetchContainers: dockerContainers.fetchContainers,
+    getContainerDetails: dockerContainers.getContainerDetails,
+    getContainerLogs: dockerContainers.getContainerLogs,
+    getContainerStats: dockerContainers.getContainerStats,
+    startContainer: dockerContainers.startContainer,
+    stopContainer: dockerContainers.stopContainer,
+    restartContainer: dockerContainers.restartContainer,
+    removeContainer: dockerContainers.removeContainer,
+    startMultipleContainers: dockerContainers.startMultipleContainers,
+    stopMultipleContainers: dockerContainers.stopMultipleContainers,
+    removeMultipleContainers: dockerContainers.removeMultipleContainers,
+    testConnection: dockerContainers.testConnection,
+    
+    // Helpers
+    getContainerName: dockerContainers.getContainerName,
+    
+    // UI actions
     clearError,
     setSearchQuery,
     setStatusFilter,
     setSortBy,
     toggleSortOrder,
-    clearFilters,
-    // Helpers
-    getContainerName
+    clearFilters
   }
 })

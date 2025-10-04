@@ -67,6 +67,7 @@
 import { onMounted } from 'vue'
 import { useContainersStore } from '@/stores/containers'
 import { useContainerActions } from '@/composables/useContainerActions'
+import { useDockerContainers } from '@/composables/docker'
 import ErrorAlert from '@/components/common/ErrorAlert.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import ContainerHeader from '@/components/features/containers/ContainerHeader.vue'
@@ -74,11 +75,14 @@ import ContainerStats from '@/components/features/containers/ContainerStats.vue'
 import ContainerSearch from '@/components/features/containers/ContainerSearch.vue'
 import ContainerTable from '@/components/features/containers/ContainerTable.vue'
 
-// Store
+// Store (UI state management)
 const containersStore = useContainersStore()
 
-// Container actions composable
-const containerActions = useContainerActions(containersStore)
+// Docker operations composable
+const dockerContainers = useDockerContainers()
+
+// Container actions composable (UI handlers)
+const containerActions = useContainerActions(dockerContainers)
 
 // Lifecycle
 onMounted(() => {

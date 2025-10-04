@@ -60,7 +60,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useDockerApi } from '@/composables/useDockerApi'
+import { useDockerApi } from '@/composables/docker'
 
 // Props for customization
 const props = defineProps({

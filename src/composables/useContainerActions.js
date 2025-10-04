@@ -1,27 +1,33 @@
 import { ref } from 'vue'
 import { notificationUtils } from '@/utils/containerUtils'
 
-export function useContainerActions(containersStore) {
+/**
+ * Composable for handling container action UI logic and user feedback
+ * Works with Docker composables to provide user-friendly interfaces
+ */
+export function useContainerActions(dockerContainers) {
   const actionLoading = ref(false)
 
   const handleTestConnection = async () => {
-    const result = await containersStore.testConnection()
+    const result = await dockerContainers.testConnection()
     if (result.success) {
       notificationUtils.success('Docker API connection successful!')
     } else {
       notificationUtils.error(`Connection test failed: ${result.error}`)
     }
+    return result
   }
 
   const handleStartContainer = async (container) => {
     actionLoading.value = true
     try {
-      const result = await containersStore.startContainer(container.id)
+      const result = await dockerContainers.startContainer(container.id)
       if (result.success) {
-        notificationUtils.success(`Started container: ${containersStore.getContainerName(container)}`)
+        notificationUtils.success(`Started container: ${dockerContainers.getContainerName(container)}`)
       } else {
         notificationUtils.error(`Failed to start container: ${result.error}`)
       }
+      return result
     } finally {
       actionLoading.value = false
     }
@@ -30,111 +36,153 @@ export function useContainerActions(containersStore) {
   const handleStopContainer = async (container) => {
     actionLoading.value = true
     try {
-      const result = await containersStore.stopContainer(container.id)
+      const result = await dockerContainers.stopContainer(container.id)
       if (result.success) {
-        notificationUtils.success(`Stopped container: ${containersStore.getContainerName(container)}`)
+        notificationUtils.success(`Stopped container: ${dockerContainers.getContainerName(container)}`)
       } else {
         notificationUtils.error(`Failed to stop container: ${result.error}`)
       }
+      return result
     } finally {
       actionLoading.value = false
     }
   }
 
   const handleRemoveContainer = async (container) => {
-    const containerName = containersStore.getContainerName(container)
+    const containerName = dockerContainers.getContainerName(container)
     
     if (!confirm(`Are you sure you want to remove container "${containerName}"?`)) {
-      return
+      return { success: false, cancelled: true }
     }
 
     actionLoading.value = true
     try {
-      const result = await containersStore.removeContainer(container.id)
+      const result = await dockerContainers.removeContainer(container.id)
       if (result.success) {
         notificationUtils.success(`Removed container: ${containerName}`)
       } else {
         notificationUtils.error(`Failed to remove container: ${result.error}`)
       }
+      return result
     } finally {
       actionLoading.value = false
     }
   }
 
-  const viewLogs = (container) => {
-    const containerName = containersStore.getContainerName(container)
-    notificationUtils.info(`View logs for: ${containerName}`)
-    // TODO: Implement log viewing modal
+  const handleRestartContainer = async (container) => {
+    actionLoading.value = true
+    try {
+      const result = await dockerContainers.restartContainer(container.id)
+      if (result.success) {
+        notificationUtils.success(`Restarted container: ${dockerContainers.getContainerName(container)}`)
+      } else {
+        notificationUtils.error(`Failed to restart container: ${result.error}`)
+      }
+      return result
+    } finally {
+      actionLoading.value = false
+    }
   }
 
-  const inspectContainer = (container) => {
-    const containerName = containersStore.getContainerName(container)
-    notificationUtils.info(`Inspect container: ${containerName}`)
-    // TODO: Implement container inspection modal
+  const viewLogs = async (container) => {
+    const containerName = dockerContainers.getContainerName(container)
+    
+    try {
+      const result = await dockerContainers.getContainerLogs(container.id, 100)
+      if (result.success) {
+        notificationUtils.info(`Viewing logs for: ${containerName}`)
+        // TODO: Open logs in modal or new view
+        console.log('Container logs:', result.data)
+        return result
+      } else {
+        notificationUtils.error(`Failed to get logs: ${result.error}`)
+        return result
+      }
+    } catch (err) {
+      notificationUtils.error(`Failed to get logs: ${err.message}`)
+      return { success: false, error: err.message }
+    }
+  }
+
+  const inspectContainer = async (container) => {
+    const containerName = dockerContainers.getContainerName(container)
+    
+    try {
+      const result = await dockerContainers.getContainerDetails(container.id)
+      if (result.success) {
+        notificationUtils.info(`Inspecting container: ${containerName}`)
+        // TODO: Open inspection in modal or new view
+        console.log('Container details:', result.data)
+        return result
+      } else {
+        notificationUtils.error(`Failed to inspect container: ${result.error}`)
+        return result
+      }
+    } catch (err) {
+      notificationUtils.error(`Failed to inspect container: ${err.message}`)
+      return { success: false, error: err.message }
+    }
   }
 
   const handleBulkStart = async (containerIds) => {
+    if (!containerIds.length) return { successful: 0, failed: 0, total: 0 }
+
     actionLoading.value = true
     try {
-      const results = await Promise.allSettled(
-        containerIds.map(id => containersStore.startContainer(id))
-      )
+      const result = await dockerContainers.startMultipleContainers(containerIds)
       
-      const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length
-      const failed = results.length - successful
+      if (result.successful > 0) {
+        notificationUtils.success(`Started ${result.successful} container${result.successful > 1 ? 's' : ''}`)
+      }
+      if (result.failed > 0) {
+        notificationUtils.error(`Failed to start ${result.failed} container${result.failed > 1 ? 's' : ''}`)
+      }
       
-      if (successful > 0) {
-        notificationUtils.success(`Started ${successful} container${successful > 1 ? 's' : ''}`)
-      }
-      if (failed > 0) {
-        notificationUtils.error(`Failed to start ${failed} container${failed > 1 ? 's' : ''}`)
-      }
+      return result
     } finally {
       actionLoading.value = false
     }
   }
 
   const handleBulkStop = async (containerIds) => {
+    if (!containerIds.length) return { successful: 0, failed: 0, total: 0 }
+
     actionLoading.value = true
     try {
-      const results = await Promise.allSettled(
-        containerIds.map(id => containersStore.stopContainer(id))
-      )
+      const result = await dockerContainers.stopMultipleContainers(containerIds)
       
-      const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length
-      const failed = results.length - successful
+      if (result.successful > 0) {
+        notificationUtils.success(`Stopped ${result.successful} container${result.successful > 1 ? 's' : ''}`)
+      }
+      if (result.failed > 0) {
+        notificationUtils.error(`Failed to stop ${result.failed} container${result.failed > 1 ? 's' : ''}`)
+      }
       
-      if (successful > 0) {
-        notificationUtils.success(`Stopped ${successful} container${successful > 1 ? 's' : ''}`)
-      }
-      if (failed > 0) {
-        notificationUtils.error(`Failed to stop ${failed} container${failed > 1 ? 's' : ''}`)
-      }
+      return result
     } finally {
       actionLoading.value = false
     }
   }
 
   const handleBulkRemove = async (containerIds) => {
+    if (!containerIds.length) return { successful: 0, failed: 0, total: 0 }
+
     if (!confirm(`Are you sure you want to remove ${containerIds.length} container${containerIds.length > 1 ? 's' : ''}?`)) {
-      return
+      return { successful: 0, failed: 0, total: 0, cancelled: true }
     }
 
     actionLoading.value = true
     try {
-      const results = await Promise.allSettled(
-        containerIds.map(id => containersStore.removeContainer(id))
-      )
+      const result = await dockerContainers.removeMultipleContainers(containerIds)
       
-      const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length
-      const failed = results.length - successful
+      if (result.successful > 0) {
+        notificationUtils.success(`Removed ${result.successful} container${result.successful > 1 ? 's' : ''}`)
+      }
+      if (result.failed > 0) {
+        notificationUtils.error(`Failed to remove ${result.failed} container${result.failed > 1 ? 's' : ''}`)
+      }
       
-      if (successful > 0) {
-        notificationUtils.success(`Removed ${successful} container${successful > 1 ? 's' : ''}`)
-      }
-      if (failed > 0) {
-        notificationUtils.error(`Failed to remove ${failed} container${failed > 1 ? 's' : ''}`)
-      }
+      return result
     } finally {
       actionLoading.value = false
     }
@@ -146,6 +194,7 @@ export function useContainerActions(containersStore) {
     handleStartContainer,
     handleStopContainer,
     handleRemoveContainer,
+    handleRestartContainer,
     viewLogs,
     inspectContainer,
     handleBulkStart,
